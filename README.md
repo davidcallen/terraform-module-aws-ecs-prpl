@@ -1,2 +1,1 @@
-# terraform-module-aws-ecs-prpl
-Terraform module to deploy PRPL application on ECS
+Deploy an ECS Service and Task for this application into an existing ECS Cluster.

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "${task_name_prefix}",
+    "image": "public.ecr.aws/docker/library/mariadb:latest",
+    "essential": true,
+    "cpu": 2,
+    "memory": 256,
+    "portMappings": [
+      {
+        "containerPort": 3306
+      }
+    ],
+    "environment": [
+      { "name" : "MARIADB_USER", "value" : "PRPL" },
+      { "name" : "MARIADB_DATABASE", "value" : "PRPL" }
+    ],
+    "secrets": [
+      { "name" : "MARIADB_PASSWORD", "valueFrom": "${secrets_param_base_uri}/prpl/database/user/prpl/password" },
+      { "name" : "MARIADB_ROOT_PASSWORD", "valueFrom": "${secrets_param_base_uri}/prpl/database/admin/prpl/password" }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "ecs-${task_name_prefix}-mariadb",
+        "awslogs-region": "${aws_region}",
+        "awslogs-create-group": "true",
+        "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
+      }
+    },
+    "mountPoints": [
+      {
+        "sourceVolume": "prpl-db",
+        "containerPath": "/var/lib/mysql",
+        "readOnly": false
+      }
+    ]
+  }
+]

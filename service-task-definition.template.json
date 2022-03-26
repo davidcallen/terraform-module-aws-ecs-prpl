@@ -1,0 +1,92 @@
+[
+  {
+    "name": "${task_name_prefix}",
+    "image": "${image_repository_url}:${image_tag}",
+    "essential": true,
+    "cpu": 2,
+    "memory": 256,
+    "portMappings": [
+      {
+        "containerPort": 8080
+      },
+      {
+        "containerPort": 8443
+      }
+    ],
+    "environment": [
+      { "name" : "PRPL_HTTP_PORT", "value" : "8080" },
+      { "name" : "PRPL_DATABASE_HOST", "value" : "mariadb" },
+      { "name" : "PRPL_DATABASE_PORT", "value" : "3306" },
+      { "name" : "PRPL_DATABASE_NAME", "value" : "PRPL" },
+      { "name" : "PRPL_DATABASE_USER", "value" : "PRPL" },
+      { "name" : "PRPL_LOGGING_LEVEL", "value" : "information" },
+      { "name" : "PRPL_LOGGING_SHOW_HOSTNAME", "value" : "true" },
+      { "name" : "PRPL_RESULTS_SCRAPING_ENABLED", "value" : "false" },
+      { "name" : "PRPL_DEBUG_STAY_ALIVE", "value" : "" },
+      { "name" : "PRPL_SLEEP_SECS", "value" : "1" },
+      { "name" : "PRPL_SLEEP_TIMES", "value" : "60" }
+    ],
+    "secrets": [
+      { "name": "PRPL_DATABASE_PWD", "valueFrom": "${secrets_param_base_uri}/prpl/database/user/prpl/password" }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "ecs-${task_name_prefix}",
+        "awslogs-region": "${aws_region}",
+        "awslogs-create-group": "true",
+        "awslogs-datetime-format": "{\"log\":\"%Y%m%d %H:%M:%S"
+      }
+    },
+    "links": [
+      "${task_name_prefix}-mariadb:mariadb"
+    ]
+  },
+  {
+    "name": "${task_name_prefix}-mariadb",
+    "image": "public.ecr.aws/docker/library/mariadb:latest",
+    "essential": true,
+    "cpu": 2,
+    "memory": 256,
+    "portMappings": [
+      {
+        "containerPort": 3306
+      }
+    ],
+    "environment": [
+      { "name" : "MARIADB_USER", "value" : "PRPL" },
+      { "name" : "MARIADB_DATABASE", "value" : "PRPL" }
+    ],
+    "secrets": [
+      { "name" : "MARIADB_PASSWORD", "valueFrom": "${secrets_param_base_uri}/prpl/database/user/prpl/password" },
+      { "name" : "MARIADB_ROOT_PASSWORD", "valueFrom": "${secrets_param_base_uri}/prpl/database/admin/prpl/password" }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "ecs-${task_name_prefix}-mariadb",
+        "awslogs-region": "${aws_region}",
+        "awslogs-create-group": "true",
+        "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
+      }
+    },
+    "mountPoints": [
+      {
+        "sourceVolume": "prpl-db",
+        "containerPath": "/var/lib/mysql",
+        "readOnly": false
+      }
+    ],
+    "healthCheck": {
+      "Command": [
+        "CMD-SHELL",
+        "mysqladmin",
+        "ping"
+      ],
+      "Interval": 10,
+      "Retries": 5,
+      "StartPeriod": 30,
+      "Timeout": 5
+    }
+  }
+]
